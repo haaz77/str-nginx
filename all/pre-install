@@ -1,0 +1,20 @@
+#!/bin/bash 
+NGINX_VERSION=1.15.1
+NGINX_RTMP_VERSION=1.2.1
+yum install -y pcre-devel  php-fpm  pcre libstdc++ zlib-devel openssl-devel
+sleep 1
+yum groupinstall 'Development Tools' -y
+sleep 2 
+cd /tmp/
+sleep 1
+curl --remote-name http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz
+git clone https://github.com/kaltura/nginx-secure-token-module.git
+git clone https://github.com/arut/nginx-rtmp-module.git -b v${NGINX_RTMP_VERSION}
+tar xzf nginx-${NGINX_VERSION}.tar.gz
+cd nginx-${NGINX_VERSION}
+chmod +x run
+./run
+sleep 60 
+make
+sleep 60  
+make install 
