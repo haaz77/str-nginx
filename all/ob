@@ -1,0 +1,23 @@
+#!/bin/sh 
+# Unlimit the locked memory and stack size by default
+
+### /ETC/SECURITY/LIMITS.CONF
+
+cat  > /etc/security/limits.conf <<EOF
+*               soft    memlock            unlimited
+*               hard    memlock            unlimited
+*               soft    stack              unlimited
+*               hard    stack              unlimited
+* hard memlock unlimited
+* soft memlock unlimited
+EOF
+sysctl net.ipv4.ip_local_port_range="15000 61000"
+sysctl net.ipv4.tcp_fin_timeout=30
+sysctl net.ipv4.tcp_tw_recycle=1
+sysctl net.ipv4.tcp_tw_reuse=1
+sysctl net.core.somaxconn=1024
+ifconfig eth0 txqueuelen 5000
+echo "/sbin/ifconfig eth0 txqueuelen 5000" >> /etc/rc.local
+sysctl net.core.netdev_max_backlog=2000
+sysctl net.ipv4.tcp_max_syn_backlog=2048
+ulimit -n 740696
