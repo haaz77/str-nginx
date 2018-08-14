@@ -1,0 +1,5 @@
+#EXTM3U
+#EXTINF:0,Student Live Stream
+http://c1.livehd7.live/hls/stream.m3u8
+#EXTINF:0,BipBop Sample
+http://c1.livehd7.live/hls2/stream.m3u8
