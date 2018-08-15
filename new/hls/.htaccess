@@ -1,0 +1,4 @@
+RewriteEngine on
+RewriteCond %{HTTP_REFERER} !^$
+RewriteCond %{HTTP_REFERER} !^http://(c1\.)?livehd7.live/.*$ [NC]
+RewriteRule \.(jpg|jpeg|gif|png|m3u8)$ - [F]
