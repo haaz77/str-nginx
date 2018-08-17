@@ -1,11 +1,15 @@
 #!/bin/bash 
 NGINX_VERSION=1.15.1
 NGINX_RTMP_VERSION=1.2.1
-yum install -y pcre-devel   xinetd php-fpm  pcre libstdc++ zlib-devel openssl-devel
+yum install -y pcre-devel   xinetd php-fpm  pcre libstdc++ zlib-devel openssl-devel gd gd-devel php-gd gd gd-devel  GeoIP GeoIP-devel GeoIP-data xinetd polkit libxml2* libxslt*
 sleep 1
 yum groupinstall 'Development Tools' -y
 sleep 2 
 yum install check-mk-agent-1.2.6p12-1.noarch.rpm -y
+sleep 1
+useradd nginx
+sleep 1
+mkdir -p  /var/cache/nginx/client_temp
 sleep 3
 cd /tmp/
 sleep 1
