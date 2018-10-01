@@ -1,0 +1,115 @@
+#user  nginx;
+worker_processes  auto;
+error_log  logs/error.log debug;
+events {
+worker_connections  1024;
+}
+rtmp {
+server {
+listen 1935;
+allow play all;
+
+#creates our "live" full-resolution HLS videostream from our incoming encoder stream and tells where to put the HLS video manifest and video fragments
+application live {
+allow play all;
+live on;
+record all;
+record_path /video_recordings;
+record_unique on;
+hls on;
+hls_nested on;
+hls_path /HLS/live;
+hls_fragment 10s;
+
+#creates the downsampled or "trans-rated" mobile video stream as a 400kbps, 480x360 sized video
+#exec /usr/bin/ffmpeg -version    >> /tmp/xxxxsss;
+##exec /opt/hls.sh $name;
+#exec ffmpeg -i rtmp://51.15.65.55:1935/live/stream -acodec copy 
+#			    -c:v libx264 -preset veryfast -profile:v baseline -vsync cfr -s 480x360 -b:v 400k -maxrate 400k -bufsize 400k -threads 0 -r 30 -f flv rtmp://51.15.65.55:1935/mobile/stream;
+#exec ffmpeg -i rtmp://51.15.65.55/live/stream -acodec 
+                           #-c:v libx264 -preset veryfast -profile:v baseline -vsync cfr -s 480x360 -b:v 400k -maxrate 400k -bufsize 400k -threads 0 -r 30  -f flv rtmp://51.15.97.35/mobile/stream_mid
+			   #-c:v libx264 -preset veryfast -profile:v baseline -vsync cfr -s 858x480 -b:v 300k -maxrate 300k -bufsize 300k -threads 0 -r 30  -f flv rtmp://51.15.97.35/mobile/stream_hi
+			   #-c:v libx264 -preset veryfast -profile:v baseline -vsync cfr -s 352x240 -b:v 200k -maxrate 200k -bufsize 200k -threads 0 -r 30  -f flv rtmp://51.15.97.35/mobile/stream_low
+			   #-c:v libx264 -preset veryfast -profile:v baseline -vsync cfr -s 1280x720 -b:v 500k -maxrate 500k -bufsize 500k -threads 0 -r 30  -f flv rtmp://51.15.97.35/mobile/stream_hd720
+                           #-c copy -f flv rtmp://51.15.65.55:1935/mobile/stream;
+#
+exec ffmpeg -i rtmp://51.15.65.55/live/stream -async 1 -vsync -1
+                 -c:v libx264 -c:a aac -strict -2 -b:v 64k -b:a 8k -vf "scale=240:trunc(ow/a/2)*2" -tune zerolatency -preset veryfast -crf 23 -f flv rtmp://51.15.97.35/mobile/stream_low 
+                 -c:v libx264 -c:a aac -strict -2 -b:v 128k -b:a 16k -vf "scale=360:trunc(ow/a/2)*2" -tune zerolatency -preset veryfast -crf 23 -f flv rtmp://51.15.97.35/mobile/stream_mid
+                 -c:v libx264 -c:a aac -strict -2 -b:v 256k -b:a 32k -vf "scale=480:trunc(ow/a/2)*2" -tune zerolatency -preset veryfast -crf 23 -f flv rtmp://51.15.97.35/mobile/stream_high
+                 -c:v libx264 -c:a aac -strict -2 -b:v 512k -b:a 64k -vf "scale=720:trunc(ow/a/2)*2" -tune zerolatency -preset veryfast -crf 23 -f flv rtmp://51.15.97.35/mobile/stream_hd720
+                 -c copy -f flv rtmp://51.15.65.55:1935/mobile/stream;
+
+#exec ffmpeg -re -i rtmp://51.15.65.55:1935/live/stream
+#	  -c:a libfdk_aac -b:a 32k  -c:v libx264 -g 50 -b:v 128K -f flv rtmp://51.15.65.55:1935/mobile/stream_low
+#          -c:a libfdk_aac -b:a 64k  -c:v libx264 -g 50 -b:v 256k -f flv rtmp://51.15.65.55:1935/mobile/stream_mid
+#          -c:a libfdk_aac -b:a 128k -c:v libx264 -g 50 -b:v 512K -f flv rtmp://51.15.65.55:1935/mobile/stream_hi
+#          -c:a libfdk_aac -b:a 128k -c:v libx264 -g 50 -b:v 512K -f flv rtmp://51.15.65.55:1935/mobile/stream_dash;
+
+
+#exec ffmpeg -re -i rtmp://localhost/live/stream -acodec libfaac -ab 128k -vcodec libx264 -s 640x360 -b:v 500k -preset medium -vprofile baseline -r 25 -f flv rtmp://localhost/mobile/stream_hi -acodec libfaac -ab 128k -vcodec libx264 -s 480x272 -b:v 300k -preset medium -vprofile baseline -r 25 -f flv rtmp://localhost/mobile/stream_mid -acodec libfaac -ab 128k  -c:v libx264 -s 320x200 -b:v 150k -preset:v fast -profile:v baseline -level 1.2 -r 25 -f flv rtmp://localhost/mobile/stream_low -acodec libfaac -vn -ab 48k -f flv rtmp://localhost/mobile/audio_only;
+
+
+
+}
+
+#creates our "mobile" lower-resolution HLS videostream from the ffmpeg-created stream and tells where to put the HLS video manifest and video fragments
+application mobile {
+allow play all;
+live on;
+hls on;
+hls_nested on;
+hls_path /HLS/mobile;
+#hls_fragment 10s;
+hls_variant _low BANDWIDTH=160000;
+hls_variant _mid BANDWIDTH=320000;
+hls_variant _hi  BANDWIDTH=640000;
+hls_variant _hd720 BANDWIDTH=2048000;
+}
+
+#allows you to play your recordings of your live streams using a URL like "rtmp://my-ip:1935/vod/filename.flv"
+application vod {
+play /video_recordings;
+}
+}
+}
+
+
+http {
+include       mime.types;
+default_type  application/octet-stream;
+
+server {
+listen 80;
+server_name 51.15.65.55;
+
+#creates the http-location for our full-resolution (desktop) HLS stream - "http://my-ip/live/my-stream-key/index.m3u8"      
+location /live {
+types {
+application/vnd.apple.mpegurl m3u8;
+}
+alias /HLS/live;
+add_header Cache-Control no-cache;
+}
+
+#creates the http-location for our mobile-device HLS stream - "http://my-ip/mobile/my-stream-key/index.m3u8"        
+location /mobile {
+types {
+application/vnd.apple.mpegurl m3u8;
+}
+alias /HLS/mobile;
+add_header Cache-Control no-cache;
+}   
+
+#allows us to see how stats on viewers on our Nginx site using a URL like: "http://my-ip/stats"     
+location /stats {
+stub_status;
+}
+
+#allows us to host some webpages which can show our videos: "http://my-ip/my-page.html"     
+location / {
+root   html;
+index  index.html index.htm;
+}   
+}
+}
