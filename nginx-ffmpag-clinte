@@ -1,0 +1,124 @@
+#user  nobody;
+worker_processes  auto;
+error_log  logs/error.log debug;
+#error_log  logs/error.log;
+#error_log  logs/error.log  notice;
+error_log  /dev/null;
+worker_rlimit_nofile 65000;
+rtmp {
+    server {
+        listen 1935; # Listen on standard RTMP port
+        chunk_size 4096;
+
+
+	application mobile {
+            live on; # Allows live input from above
+            hls on; # Enable HTTP Live Streaming
+            hls_nested on;
+            allow play all;
+            # Pointing this to an SSD is better as this involves lots of IO
+            hls_path /HLS/mobile/;
+
+            # Instruct clients to adjust resolution according to bandwidth
+            hls_variant _low BANDWIDTH=288000; # Low bitrate, sub-SD resolution
+            hls_variant _mid BANDWIDTH=448000; # Medium bitrate, SD resolution
+            hls_variant _high BANDWIDTH=1152000; # High bitrate, higher-than-SD resolution
+            hls_variant _hd720 BANDWIDTH=2048000; # High bitrate, HD 720p resolution
+            hls_variant _src BANDWIDTH=4096000; # Source bitrate, source resolution
+        }
+
+
+
+        }
+    }
+
+#pid        logs/nginx.pid;
+
+
+events {
+    worker_connections  8000;
+}
+
+
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+
+    #log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+    #                  '$status $body_bytes_sent "$http_referer" '
+    #                  '"$http_user_agent" "$http_x_forwarded_for"';
+
+    #access_log  logs/access.log  main;
+
+    sendfile        on;
+    #tcp_nopush     on;
+    access_log off;
+    #keepalive_timeout  0;
+    keepalive_timeout  65;
+
+    #gzip  on;
+
+server {
+    listen 80;
+    	location /mobile {
+      valid_referers  none  blocked  server_names www.abd157.com abd157.com www.ads3421.live ads3421.live www.ah742.live ah742.live www.ama11.world ama11.world www.fa157.site fa157.site www.hna325.life hna325.life www.hy342.life hy342.life www.match7.live match7.live www.shami32.life shami32.life www.sla391.live sla391.live livehd7.com www.livehd7.com livehd7.live www.livehd7.live;
+      if ($invalid_referer) {
+        return   444;
+      }
+        # Disable cache
+        add_header Cache-Control no-cache;
+        # CORS setup
+        add_header 'Access-Control-Allow-Origin' 'http://match7.live' always;
+        add_header 'Access-Control-Expose-Headers' 'Content-Length';
+
+        # allow CORS preflight requests
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' 'http://match7.live';
+            add_header 'Access-Control-Max-Age' 1728000;
+            add_header 'Content-Type' 'text/plain charset=UTF-8';
+            add_header 'Content-Length' 0;
+            return 204;
+        }
+        #types {
+         #   application/vnd.apple.mpegurl m3u8;
+          #  video/mp2t ts;
+        #}
+
+        #root /dev/shm/;
+ 	alias /HLS/mobile;
+    	}
+    	location /hls2 {
+      valid_referers  none  blocked  server_names  livehd7.live www.livehd7.live;
+
+      if ($invalid_referer) {
+        return   444;
+      }
+        # Disable cache
+        add_header Cache-Control no-cache;
+
+        # CORS setup
+        add_header 'Access-Control-Allow-Origin' 'http://livehd7.top' always;
+        add_header 'Access-Control-Expose-Headers' 'Content-Length';
+
+        # allow CORS preflight requests
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' 'http://livehd7.top';
+            add_header 'Access-Control-Max-Age' 1728000;
+            add_header 'Content-Type' 'text/plain charset=UTF-8';
+            add_header 'Content-Length' 0;
+            return 204;
+        }
+        #types {
+         #   application/vnd.apple.mpegurl m3u8;
+          #  video/mp2t ts;
+        #}
+
+        root /dev/shm/;
+    	}
+
+        location /online_status {
+          stub_status on;
+          access_log   off;
+        }
+    }
+    }
