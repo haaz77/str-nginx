@@ -11,23 +11,15 @@ cat  > /etc/security/limits.conf <<EOF
 * hard memlock unlimited
 * soft memlock unlimited
 EOF
-<<<<<<< HEAD
-sysctl net.ipv4.ip_local_port_range="15000 61000"
-sysctl net.ipv4.tcp_fin_timeout=30
-sysctl -w fs.file-max=740696
-sysctl net.ipv4.tcp_tw_recycle=1
-sysctl net.ipv4.tcp_tw_reuse=1
-sysctl net.core.somaxconn=1024
-ifconfig eth0 txqueuelen 5000
 =======
 sysctl -w net.ipv4.ip_local_port_range="15000 61000"
 sysctl -w net.ipv4.tcp_fin_timeout=30
 sysctl -w net.ipv4.tcp_tw_recycle=1
 sysctl -w net.ipv4.tcp_tw_reuse=1
-sysctl -w net.core.somaxconn=1024
-ifconfig  eth0 txqueuelen 5000
->>>>>>> b0ca57680fb3318d9abfaddc51b687af35f3ff31
-echo "/sbin/ifconfig eth0 txqueuelen 5000" >> /etc/rc.local
-sysctl net.core.netdev_max_backlog=2000
-sysctl net.ipv4.tcp_max_syn_backlog=2048
-ulimit -n 740696
+sysctl -w net.core.somaxconn=4096
+echo "/sbin/ifconfig cni0 txqueuelen 10000" >> /etc/rc.local
+echo "/sbin/ifconfig ens2 txqueuelen 10000" >> /etc/rc.local
+ifconfig ens2 txqueuelen 10000
+ifconfig cni0 txqueuelen 10000
+sysctl -w net.core.netdev_max_backlog=8000
+sysctl net.ipv4.tcp_max_syn_backlog=8192
